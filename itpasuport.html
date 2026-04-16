@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ITパスポート試験 疑似体験ソフトウェア</title>
+    <style>
+        body { font-family: "MS UI Gothic", "Meiryo", sans-serif; background-color: #d4d0c8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        .window { width: 1000px; height: 720px; background-color: #fff; border: 2px solid #000; display: none; flex-direction: column; position: relative; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); }
+        
+        /* ログイン画面 */
+        #login-screen { display: flex; width: 450px; height: 300px; background: #f0f0f0; border: 2px solid #666; flex-direction: column; padding: 30px; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); }
+        .login-header { font-size: 18px; font-weight: bold; border-bottom: 3px solid #0078d7; margin-bottom: 20px; padding-bottom: 5px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: inline-block; width: 100px; font-weight: bold; }
+        .btn-start { padding: 12px; background: #0078d7; color: white; border: none; font-weight: bold; cursor: pointer; }
+
+        /* 試験画面ヘッダー */
+        .header { background-color: #ffffcc; padding: 10px; border-bottom: 2px solid #000; display: flex; justify-content: space-between; align-items: center; }
+        .user-info { font-size: 14px; line-height: 1.4; }
+        .timer-val { font-size: 26px; font-weight: bold; }
+        .header-btns button { margin-left: 5px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+        .btn-orange { background-color: #ff9966; font-weight: bold; border: 2px solid #000; cursor: pointer; }
+
+        /* コンテンツエリア */
+        .content { flex: 1; padding: 25px; overflow-y: auto; background: #fff; border-bottom: 1px solid #ccc; }
+        .q-num-box { font-size: 18px; font-weight: bold; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; }
+        .q-text { font-size: 16px; line-height: 1.8; margin-bottom: 30px; }
+
+        /* 解答操作エリア */
+        .ans-area { background: #e1e1e1; padding: 15px; border-top: 1px solid #999; display: flex; justify-content: center; gap: 30px; align-items: center; font-weight: bold; }
+        
+        /* 下部エリア */
+        .footer-area { display: flex; background: #eee; padding: 10px; height: 130px; border-top: 1px solid #000; }
+        .status-box { display: flex; border: 1px solid #000; background: #fff; flex: 1; margin-right: 15px; overflow-x: auto; }
+        .status-label { background: #0078d7; color: #fff; writing-mode: vertical-rl; padding: 5px; font-size: 12px; text-align: center; }
+        .status-table { border-collapse: collapse; font-size: 11px; width: 100%; }
+        .status-table th, .status-table td { border: 1px solid #999; text-align: center; min-width: 32px; height: 24px; }
+
+        /* ナビゲーション */
+        .nav-controls { display: flex; flex-direction: column; gap: 5px; width: 220px; }
+        .btn-nav { padding: 10px; cursor: pointer; font-weight: bold; border: 1px solid #000; background: #fff; }
+
+        /* 結果画面 */
+        .result-container { padding: 30px; overflow-y: auto; height: 100%; }
+        .ipa-logo { color: #f00; font-size: 45px; font-weight: bold; font-family: "Times New Roman", serif; font-style: italic; margin-right: 15px; }
+        .res-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .score-display { font-size: 32px; border: 2px solid #000; display: inline-block; padding: 20px 50px; background: #fff; margin: 20px 0; }
+        .exp-box { background: #fff3e0; border-left: 5px solid #ff9800; padding: 10px; margin-top: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-header">ITパスポート試験 疑似体験 ログイン</div>
+    <div class="input-group">
+        <label>受験番号：</label><input type="text" id="in-id" value="IP1401A001">
+    </div>
+    <div class="input-group">
+        <label>氏名：</label><input type="text" id="in-name" value="試験 太郎">
+    </div>
+    <button class="btn-start" onclick="startExam()">試験を開始する</button>
+</div>
+
+<div id="exam-window" class="window">
+    <div class="header">
+        <div class="user-info">
+            受験番号：<span id="disp-id"></span><br>
+            氏名：<span id="disp-name"></span>
+        </div>
+        <div>残り時間：<span class="timer-val" id="m">109</span> 分 <span class="timer-val" id="s">00</span> 秒</div>
+        <div class="header-btns">
+            <button class="btn-orange" onclick="finishExam()">疑似体験終了</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="q-head" class="q-num-box"></div>
+        <div id="q-body" class="q-text"></div>
+    </div>
+
+    <div class="ans-area">
+        解答欄 
+        <label><input type="radio" name="opt" value="ア" onclick="saveAns('ア')"> ア</label>
+        <label><input type="radio" name="opt" value="イ" onclick="saveAns('イ')"> イ</label>
+        <label><input type="radio" name="opt" value="ウ" onclick="saveAns('ウ')"> ウ</label>
+        <label><input type="radio" name="opt" value="エ" onclick="saveAns('エ')"> エ</label>
+        <label style="margin-left:50px; color:blue; font-size:14px;"><input type="checkbox" id="mark" onclick="saveMark()"> ● 後で見直す</label>
+    </div>
+
+    <div class="footer-area">
+        <div class="status-box">
+            <div class="status-label">解答状況</div>
+            <table class="status-table"><tr id="row-q"><th>問</th></tr><tr id="row-a"><th>答</th></tr></table>
+        </div>
+        <div class="nav-controls">
+            <div style="display:flex; gap:5px;">
+                <button class="btn-nav" style="flex:1;" onclick="moveQ(-1)">＜ 前の問</button>
+                <button class="btn-nav" style="flex:1; color:#0078d7;" onclick="moveQ(1)">次の問 ＞</button>
+            </div>
+            <button class="btn-orange" style="padding:10px;" onclick="finishExam()">試験終了</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-window" class="window" style="overflow-y:auto;">
+    <div class="result-container">
+        <div class="res-header">
+            <div style="display:flex; align-items:center;"><span class="ipa-logo">IPA</span> <span style="font-size:24px; font-weight:bold;">ITパスポート試験</span></div>
+            <div style="text-align:right; font-size:14px;">受験番号：<span id="res-id"></span><br>氏名：<span id="res-name"></span></div>
+        </div>
+        <h3 style="color:red; border-bottom:1px solid red;">あなたの正答数は以下のとおりです。</h3>
+        <div style="text-align:center;">
+            <div class="score-display">正解数：<span id="final-score">0</span> / 20 問</div>
+        </div>
+        <div id="detail-log"></div>
+        <button onclick="location.reload()" style="margin-top:20px; padding:15px; cursor:pointer; width:100%;">タイトル画面へ戻る</button>
+    </div>
+</div>
+
+<script>
+// 全20問のデータ（画像の内容を反映）
+const questions = [
+    {id:24, cat:"ストラテジ系", txt:"RPAに関する記述として、最も適切なものはどれか。", choices:["企業の一部業務を外部委託しリソースを集中させる。","工場の搬送等にハードウェアロボットを用いる。","利用者が主体的にシステム管理を行いITリテラシーを高める。","ホワイトカラーの定型事務をソフトウェアロボットで代替する。"], ans:"エ", exp:"RPAは事務作業の自動化です。"},
+    {id:2, cat:"マネジメント系", txt:"ISMSのPDCAサイクルにおいて、是正処置を行うプロセスはどれか。", choices:["Plan","Do","Check","Action"], ans:"エ", exp:"是正処置・改善はAction(A)です。"},
+    {id:3, cat:"テクノロジ系", txt:"ソーシャルエンジニアリングの被害に結びつきやすい状況はどれか。", choices:["運用担当者の意識が低い","天井の防水対策不足","アクセス制御の不備","通信の未暗号化"], ans:"ア", exp:"人の心理を突く攻撃なので意識が重要です。"},
+    {id:4, cat:"マネジメント系", txt:"情報セキュリティ方針を改訂した際に周知すべき範囲はどれか。", choices:["機密部署の従業員のみ","経営者のみ","全従業員および関連する外部関係者","セキュリティ管理者のみ"], ans:"ウ", exp:"方針は関係者全員に周知します。"},
+    {id:5, cat:"テクノロジ系", txt:"HTTPからHTTPSに変更して実現できることはどれか。", choices:["通信速度向上","ウイルス防止","通信の機密性確保","表示速度向上"], ans:"ウ", exp:"HTTPSは通信の暗号化(機密性)を担います。"},
+    {id:6, cat:"テクノロジ系", txt:"機密性を直接的に高める手法はどれか。", choices:["ログの確認","アクセス日時の確認","バックアップの取得","ファイルの暗号化"], ans:"エ", exp:"暗号化は機密性確保の代表例です。"},
+    {id:7, cat:"テクノロジ系", txt:"DoS攻撃によって受ける直接的な被害はどれか。", choices:["データ解読","パスワード変更","ウイルス感染","サービス提供の阻害"], ans:"エ", exp:"大量パケットによる妨害攻撃です。"},
+    {id:2, cat:"テクノロジ系", txt:"PKIに必要不可欠な構成要素はどれか。", choices:["VPN","認証局","バイオメトリクス","FW"], ans:"イ", exp:"信頼を担保する認証局(CA)が必須です。"},
+    {id:1, cat:"テクノロジ系", txt:"社外PCのウイルス有無を確認する仕組みはどれか。", choices:["DMZ","IDS","検疫ネットワーク","WAF"], ans:"ウ", exp:"接続前に検査するのが検疫NWです。"},
+    {id:5, cat:"テクノロジ系", txt:"身代金を要求するマルウェアはどれか。", choices:["ランサムウェア","アドウェア","スパイウェア","ボット"], ans:"ア", exp:"ランサム＝身代金です。"}
+];
+// 残り10問を自動生成
+for(let i=11; i<=20; i++){
+    questions.push({id:i, cat:"テクノロジ系", txt:`セキュリティと暗号化に関する問題 第${i}問`, choices:["アの選択肢","イの選択肢","ウの選択肢","エの選択肢"], ans:"ア", exp:"基本知識の確認です。"});
+}
+
+let cur = 0, userAns = new Array(20).fill(""), marks = new Array(20).fill(false);
+
+function startExam() {
+    document.getElementById('disp-id').innerText = document.getElementById('res-id').innerText = document.getElementById('in-id').value;
+    document.getElementById('disp-name').innerText = document.getElementById('res-name').innerText = document.getElementById('in-name').value;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('exam-window').style.display = 'flex';
+    const rQ = document.getElementById('row-q'), rA = document.getElementById('row-a');
+    questions.forEach((_, i) => {
+        let th = document.createElement('th'); th.innerText = i + 1; rQ.appendChild(th);
+        let td = document.createElement('td'); td.id = 'st-' + i; rA.appendChild(td);
+    });
+    render();
+    setInterval(timer, 1000);
+}
+
+function render() {
+    const q = questions[cur];
+    document.getElementById('q-head').innerText = `問${cur+1} 【${q.cat}】 (問${q.id})`;
+    document.getElementById('q-body').innerHTML = q.txt + "<br><br>" + q.choices.map((c,i)=>["ア","イ","ウ","エ"][i]+" "+c).join("<br>");
+    document.getElementsByName('opt').forEach(r => r.checked = (r.value === userAns[cur]));
+    document.getElementById('mark').checked = marks[cur];
+}
+
+function saveAns(v) { userAns[cur] = v; document.getElementById('st-'+cur).innerText = v; }
+function saveMark() { marks[cur] = document.getElementById('mark').checked; document.getElementById('st-'+cur).style.background = marks[cur] ? "#ccf" : "#fff"; }
+function moveQ(d) { cur = Math.max(0, Math.min(19, cur + d)); render(); }
+
+function timer() {
+    let s = parseInt(document.getElementById('s').innerText), m = parseInt(document.getElementById('m').innerText);
+    if(s==0){ if(m>0){ m--; s=59; } } else s--;
+    document.getElementById('m').innerText = m; document.getElementById('s').innerText = s.toString().padStart(2,'0');
+}
+
+function finishExam() {
+    if(!confirm("試験を終了しますか？")) return;
+    document.getElementById('exam-window').style.display = 'none';
+    document.getElementById('result-window').style.display = 'block';
+    let score = 0, log = "";
+    questions.forEach((q, i) => {
+        let ok = (userAns[i] === q.ans); if(ok) score++;
+        log += `<div style="padding:10px; border-bottom:1px solid #ccc;">
+            <strong>問${i+1} [${q.cat}]: ${ok?'◯':'×'}</strong> (答:${q.ans} / 選択:${userAns[i]||'未'})
+            <div class="exp-box">解説: ${q.exp}</div></div>`;
+    });
+    document.getElementById('final-score').innerText = score;
+    document.getElementById('detail-log').innerHTML = log;
+}
+</script>
+</body>
+</html>
